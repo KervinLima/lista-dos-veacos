@@ -1,0 +1,1026 @@
+/* ============================================================
+   LISTA DOS VEACOS — styles.css
+   Neo-brutalismo caricato: bordas grossas, sombras sólidas,
+   cores gritantes e animações alegres.
+   ============================================================ */
+
+/* ── 1. RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --amarelo:   #FFE045;
+  --rosa:      #E8360A;
+  --laranja:   #FF7A00;
+  --roxo:      #3D1500;
+  --verde:     #5BFF6A;
+  --vermelho:  #FFB800;
+  --branco:    #FFF8F0;
+
+  --borda:     4px solid var(--roxo);
+  --shadow:    6px 6px 0 var(--roxo);
+  --radius:    20px;
+
+  --font-titulo: 'Bangers', cursive;
+  --font-sub:    'Fredoka', sans-serif;
+  --font-body:   'Nunito', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--laranja);
+  color: var(--roxo);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Fundo de bolinhas via canvas (posicionado atrás de tudo) */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.25;
+}
+
+/* Tudo à frente do canvas */
+header, main, footer,
+.modal-overlay, .toast, .fab {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 2. UTILITÁRIOS ──────────────────────────────────────── */
+.hidden { display: none !important; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Card base — neo-brutalismo */
+.card-veaco {
+  background: var(--branco);
+  border: var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card-veaco:hover {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 8px 8px 0 var(--roxo);
+}
+
+/* Botão base */
+.btn {
+  font-family: var(--font-sub);
+  font-size: 1rem;
+  font-weight: 600;
+  border: var(--borda);
+  border-radius: 14px;
+  padding: 0.55rem 1.25rem;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--roxo);
+  transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--roxo);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--roxo);
+  outline-offset: 3px;
+}
+
+.btn-primary {
+  background: var(--laranja);
+  color: var(--branco);
+}
+.btn-primary:hover { background: #e06900; }
+
+.btn-outline {
+  background: var(--branco);
+  color: var(--roxo);
+}
+.btn-outline:hover { background: var(--amarelo); }
+
+.btn-danger {
+  background: var(--vermelho);
+  color: var(--branco);
+}
+.btn-danger:hover { background: #cc0000; }
+
+.btn-success {
+  background: var(--verde);
+  color: var(--roxo);
+}
+
+/* Input / Select */
+.input-veaco {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.65rem 0.9rem;
+  border: var(--borda);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--roxo);
+  background: var(--branco);
+  color: var(--roxo);
+  outline: none;
+  transition: box-shadow 0.15s;
+}
+.input-veaco:focus {
+  box-shadow: 5px 5px 0 var(--rosa);
+  border-color: var(--rosa);
+}
+
+.select-veaco {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232B1055' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  padding-right: 2rem;
+}
+
+/* ── 3. HEADER ───────────────────────────────────────────── */
+.site-header {
+  background: var(--rosa);
+  border-bottom: var(--borda);
+  box-shadow: 0 4px 0 var(--roxo);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.mascote-mini {
+  font-size: 1.8rem;
+  animation: mascote-bob 2s ease-in-out infinite;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.mascote-mini:hover {
+  transform: rotate(-15deg) scale(1.2);
+}
+
+.logo-text {
+  font-family: var(--font-titulo);
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  color: var(--roxo);
+  text-shadow: 2px 2px 0 var(--branco);
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-greeting {
+  font-family: var(--font-sub);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--roxo);
+}
+
+/* ── 4. HERO ─────────────────────────────────────────────── */
+.hero {
+  padding: 3rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mascote-hero {
+  font-size: clamp(4rem, 12vw, 9rem);
+  animation: mascote-bob 3s ease-in-out infinite;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: inline-block;
+  filter: drop-shadow(4px 4px 0 var(--roxo));
+}
+.mascote-hero:hover {
+  animation: mascote-shake 0.4s ease-in-out;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.titulo-principal {
+  font-family: var(--font-titulo);
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 0.95;
+  letter-spacing: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  transform: rotate(-3deg);
+  animation: titulo-bounce 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.titulo-linha1 {
+  color: var(--amarelo);
+  -webkit-text-stroke: 4px var(--roxo);
+  paint-order: stroke fill;
+  text-shadow: 6px 6px 0 var(--rosa);
+}
+
+.titulo-linha2 {
+  color: var(--rosa);
+  -webkit-text-stroke: 4px var(--roxo);
+  paint-order: stroke fill;
+  text-shadow: 6px 6px 0 var(--amarelo);
+}
+
+.titulo-emoji {
+  font-size: 0.6em;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+.subtitulo {
+  font-family: var(--font-sub);
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 600;
+  color: var(--roxo);
+  background: var(--branco);
+  border: var(--borda);
+  border-radius: var(--radius);
+  padding: 0.6rem 1.4rem;
+  box-shadow: 4px 4px 0 var(--roxo);
+  max-width: 600px;
+  text-align: center;
+}
+
+.btn-cta {
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  padding: 0.8rem 2rem;
+  animation: pulsar 2s ease-in-out infinite;
+  background: var(--laranja);
+  color: var(--branco);
+}
+
+/* ── 5. STATS ────────────────────────────────────────────── */
+.stats-section {
+  padding: 1.5rem 1.5rem;
+}
+
+.stats-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.2rem;
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+  animation: card-in 0.5s ease both;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.stat-label {
+  font-family: var(--font-sub);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--roxo);
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-family: var(--font-titulo);
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+  color: var(--roxo);
+  word-break: break-word;
+}
+
+.stat-sub {
+  font-size: 0.8rem;
+  color: var(--rosa);
+  font-weight: 700;
+}
+
+/* ── 6. SEÇÃO LISTA ──────────────────────────────────────── */
+.lista-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 4rem;
+}
+
+.lista-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-family: var(--font-titulo);
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: 2px;
+  color: var(--roxo);
+  text-shadow: 3px 3px 0 var(--rosa);
+  margin-bottom: 1rem;
+}
+
+.lista-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.search-wrap { flex: 1; min-width: 200px; }
+.filter-wrap { min-width: 150px; }
+
+.view-toggle {
+  display: flex;
+  border: var(--borda);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 3px 3px 0 var(--roxo);
+}
+
+.btn-view {
+  font-family: var(--font-sub);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  background: var(--branco);
+  border: none;
+  cursor: pointer;
+  color: var(--roxo);
+  transition: background 0.15s, color 0.15s;
+}
+.btn-view:not(:last-child) {
+  border-right: var(--borda);
+}
+.btn-view.active {
+  background: var(--roxo);
+  color: var(--branco);
+}
+.btn-view:focus-visible {
+  outline: 3px solid var(--rosa);
+  outline-offset: -3px;
+}
+
+/* ── 7. LOADING SKELETON ─────────────────────────────────── */
+.loading-state {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.skeleton-card {
+  background: linear-gradient(90deg, #e06900 25%, #ff9a33 50%, #e06900 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  border: var(--borda);
+  border-radius: var(--radius);
+  height: 200px;
+  box-shadow: var(--shadow);
+}
+
+/* ── 8. ESTADO VAZIO ─────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  font-family: var(--font-sub);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--roxo);
+}
+.empty-mascote {
+  display: block;
+  font-size: 5rem;
+  margin-bottom: 1rem;
+  animation: mascote-bob 2.5s ease-in-out infinite;
+}
+
+/* ── 9. GRID DE CARDS ────────────────────────────────────── */
+.lista-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.devedor-card {
+  padding: 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: card-in 0.4s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+.devedor-card.pago {
+  opacity: 0.7;
+  background: #f0fff0;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-avatar {
+  font-size: 2.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.card-nome {
+  font-family: var(--font-sub);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--roxo);
+  word-break: break-word;
+}
+
+.card-valor {
+  font-family: var(--font-titulo);
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+  color: var(--rosa);
+  -webkit-text-stroke: 1px var(--roxo);
+  paint-order: stroke fill;
+}
+.devedor-card.pago .card-valor {
+  color: var(--verde);
+  text-decoration: line-through;
+}
+
+.card-motivo {
+  font-size: 0.9rem;
+  color: var(--roxo);
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--roxo);
+  opacity: 0.75;
+}
+
+.card-atraso {
+  font-weight: 700;
+  color: var(--vermelho);
+}
+.devedor-card.pago .card-atraso {
+  color: var(--verde);
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Selo de veaquice */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-sub);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  border: 2px solid var(--roxo);
+}
+.selo-0  { background: #e8f5e9; } /* veaquinho */
+.selo-1  { background: var(--amarelo); } /* júnior */
+.selo-2  { background: #ffe0b2; } /* sênior */
+.selo-3  { background: #f3e5f5; } /* lendário */
+.selo-pago { background: var(--verde); }
+
+.status-badge {
+  font-family: var(--font-sub);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 50px;
+  border: 2px solid var(--roxo);
+}
+.status-devendo { background: var(--vermelho); color: var(--branco); }
+.status-pago    { background: var(--verde);    color: var(--roxo); }
+
+/* Botões de ação admin no card */
+.card-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 2px dashed var(--roxo);
+}
+
+.btn-action {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 10px;
+  border: 2px solid var(--roxo);
+  cursor: pointer;
+  font-family: var(--font-sub);
+  font-weight: 600;
+  box-shadow: 2px 2px 0 var(--roxo);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-action:active {
+  transform: translate(1px,1px);
+  box-shadow: 1px 1px 0 var(--roxo);
+}
+.btn-action:focus-visible {
+  outline: 3px solid var(--rosa);
+}
+.btn-edit  { background: var(--amarelo); color: var(--roxo); }
+.btn-pay   { background: var(--verde);   color: var(--roxo); }
+.btn-del   { background: var(--vermelho); color: var(--branco); }
+
+/* ── 10. TABELA ──────────────────────────────────────────── */
+.lista-tabela-wrap {
+  overflow-x: auto;
+  border: var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--branco);
+}
+
+.lista-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.lista-tabela th {
+  background: var(--roxo);
+  color: var(--branco);
+  font-family: var(--font-sub);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.lista-tabela td {
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--amarelo);
+  vertical-align: middle;
+}
+
+.lista-tabela tr:last-child td { border-bottom: none; }
+
+.lista-tabela tr:hover td { background: #ffe5cc; }
+
+.lista-tabela .td-avatar { font-size: 1.6rem; }
+.lista-tabela .td-valor  { font-family: var(--font-titulo); font-size: 1.2rem; color: var(--rosa); }
+.lista-tabela .td-acoes  { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* ── 11. FOOTER ──────────────────────────────────────────── */
+.site-footer {
+  background: var(--roxo);
+  color: var(--branco);
+  text-align: center;
+  padding: 2rem 1.5rem;
+  font-family: var(--font-sub);
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.footer-aviso {
+  opacity: 0.7;
+  font-size: 0.85rem;
+}
+
+.footer-admin-link {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--amarelo);
+  opacity: 0.5;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.footer-admin-link:hover { opacity: 1; text-decoration: underline; }
+.footer-admin-link:focus-visible {
+  outline: 2px solid var(--amarelo);
+  border-radius: 4px;
+}
+
+/* ── 12. MODAIS ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(43, 16, 85, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+  animation: fade-in 0.2s ease;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem 1.75rem;
+  position: relative;
+  animation: modal-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-height: 90vh;
+  overflow-y: auto;
+  /* reset rotation for modal */
+  transform: none !important;
+}
+.modal-box:hover {
+  transform: none !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.modal-confirm-box { max-width: 380px; }
+
+.modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: var(--vermelho);
+  color: var(--branco);
+  border: 2px solid var(--roxo);
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 2px 2px 0 var(--roxo);
+  transition: transform 0.1s;
+}
+.modal-close:hover  { transform: scale(1.1); }
+.modal-close:focus-visible { outline: 3px solid var(--roxo); }
+
+.modal-title {
+  font-family: var(--font-titulo);
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+  color: var(--roxo);
+  margin-bottom: 1.25rem;
+  text-shadow: 2px 2px 0 var(--rosa);
+}
+
+/* Formulário no modal */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-family: var(--font-sub);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--roxo);
+}
+
+.field-help {
+  font-size: 0.78rem;
+  opacity: 0.65;
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.emoji-opt {
+  font-size: 1.6rem;
+  padding: 0.35rem;
+  background: var(--branco);
+  border: 2px solid var(--roxo);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.1s, box-shadow 0.1s;
+  box-shadow: 2px 2px 0 var(--roxo);
+  line-height: 1;
+}
+.emoji-opt:hover  { transform: scale(1.15); }
+.emoji-opt.selected {
+  background: var(--amarelo);
+  box-shadow: 3px 3px 0 var(--roxo);
+  transform: scale(1.1);
+}
+.emoji-opt:focus-visible {
+  outline: 3px solid var(--rosa);
+}
+
+.form-error {
+  background: #ffe0e0;
+  border: 2px solid var(--vermelho);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vermelho);
+  margin-bottom: 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* ── 13. TOAST ───────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--roxo);
+  color: var(--branco);
+  font-family: var(--font-sub);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  border: var(--borda);
+  border-color: var(--branco);
+  box-shadow: 4px 4px 0 var(--rosa);
+  z-index: 300;
+  animation: toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-width: 90vw;
+  text-align: center;
+}
+
+/* ── 14. FAB ─────────────────────────────────────────────── */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 150;
+  width: 60px; height: 60px;
+  font-size: 1.6rem;
+  background: var(--laranja);
+  color: var(--branco);
+  border: var(--borda);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--roxo);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  animation: pulsar 2.5s ease-in-out infinite;
+  min-width: 48px; min-height: 48px;
+}
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 7px 7px 0 var(--roxo);
+  animation: none;
+}
+.fab:active {
+  transform: scale(0.95);
+  box-shadow: 2px 2px 0 var(--roxo);
+}
+.fab:focus-visible {
+  outline: 4px solid var(--roxo);
+  outline-offset: 3px;
+}
+
+/* ── 15. ANIMAÇÕES ───────────────────────────────────────── */
+@keyframes titulo-bounce {
+  0%   { transform: rotate(-3deg) scale(0.3); opacity: 0; }
+  60%  { transform: rotate(-3deg) scale(1.08); opacity: 1; }
+  80%  { transform: rotate(-3deg) scale(0.97); }
+  100% { transform: rotate(-3deg) scale(1); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: rotate(var(--rot,0deg)) translateY(24px); }
+  to   { opacity: 1; transform: rotate(var(--rot,0deg)) translateY(0); }
+}
+
+@keyframes mascote-bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes mascote-shake {
+  0%  { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg) scale(1.1); }
+  40% { transform: rotate(12deg) scale(1.1); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(8deg); }
+  100%{ transform: rotate(0deg); }
+}
+
+@keyframes pulsar {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.06); }
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.8) translateY(30px) !important; }
+  to   { opacity: 1; transform: scale(1) translateY(0) !important; }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── 16. PREFERS REDUCED MOTION ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+/* ── 17. RESPONSIVIDADE ──────────────────────────────────── */
+@media (max-width: 480px) {
+  .header-inner { padding: 0.6rem 1rem; }
+  .logo-text { display: none; }
+  .hero { padding: 2rem 1rem 1.5rem; }
+  .stats-section { padding: 1rem; }
+  .lista-section { padding: 1rem 1rem 5rem; }
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; justify-content: center; }
+  .fab { bottom: 1.2rem; right: 1.2rem; }
+}
+
+@media (min-width: 768px) {
+  .hero-inner {
+    flex-direction: row;
+    text-align: left;
+    gap: 2rem;
+  }
+  .hero-text { align-items: flex-start; }
+  .titulo-principal { align-items: flex-start; }
+  .mascote-hero { font-size: clamp(6rem, 10vw, 10rem); }
+}
+
+/* ── 18. LOGIN PAGE ──────────────────────────────────────── */
+.login-page-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2rem;
+  animation: modal-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.login-mascote {
+  text-align: center;
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.login-title {
+  font-family: var(--font-titulo);
+  font-size: 2.5rem;
+  text-align: center;
+  color: var(--roxo);
+  text-shadow: 3px 3px 0 var(--rosa);
+  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.login-back {
+  display: block;
+  text-align: center;
+  margin-top: 1.25rem;
+  font-family: var(--font-sub);
+  font-size: 0.9rem;
+  color: var(--roxo);
+  opacity: 0.7;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.login-back:hover { opacity: 1; text-decoration: underline; }
+.login-back:focus-visible {
+  outline: 2px solid var(--roxo);
+  border-radius: 4px;
+}
+
+.password-wrap {
+  position: relative;
+}
+.password-wrap .input-veaco {
+  padding-right: 3rem;
+}
+.btn-show-pass {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--roxo);
+  opacity: 0.6;
+  padding: 0.25rem;
+  transition: opacity 0.2s;
+}
+.btn-show-pass:hover  { opacity: 1; }
+.btn-show-pass:focus-visible {
+  outline: 2px solid var(--roxo);
+  border-radius: 4px;
+}

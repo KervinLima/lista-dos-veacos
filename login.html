@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área do Dono 👑 — Lista dos Veacos</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐮</text></svg>" />
+</head>
+<body class="login-page-body">
+
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <main style="position:relative; z-index:1; width:100%;">
+    <div class="login-box card-veaco" style="margin: 0 auto;">
+
+      <div class="login-mascote" aria-hidden="true">👑</div>
+      <h1 class="login-title">Área do Dono</h1>
+
+      <form id="form-login" novalidate>
+
+        <div class="form-group">
+          <label for="login-email">E-mail</label>
+          <input
+            type="email"
+            id="login-email"
+            class="input-veaco"
+            placeholder="chefe@exemplo.com"
+            required
+            autocomplete="email"
+            aria-required="true"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="login-senha">Senha</label>
+          <div class="password-wrap">
+            <input
+              type="password"
+              id="login-senha"
+              class="input-veaco"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+              aria-required="true"
+            />
+            <button
+              type="button"
+              class="btn-show-pass"
+              id="btn-show-pass"
+              aria-label="Mostrar senha"
+              title="Mostrar/ocultar senha"
+            >👁️</button>
+          </div>
+        </div>
+
+        <div id="login-error" class="form-error hidden" role="alert" aria-live="assertive"></div>
+
+        <button type="submit" class="btn btn-primary" id="btn-entrar" style="width:100%; justify-content:center; margin-top:0.5rem;">
+          <span id="btn-entrar-text">Entrar 👑</span>
+        </button>
+
+      </form>
+
+      <a href="index.html" class="login-back" aria-label="Voltar para a lista">
+        ← Voltar para a lista
+      </a>
+
+    </div>
+  </main>
+
+  <!-- Supabase via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

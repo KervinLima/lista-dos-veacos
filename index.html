@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista dos Veacos 🐮💸 — Quem deve, aparece aqui</title>
+  <meta name="description" content="A lista oficial (e bem-humorada) de quem está devendo. Pagar é de graça!" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Lista dos Veacos 🐮💸" />
+  <meta property="og:description" content="A lista oficial (e bem-humorada) de quem está devendo. Pagar é de graça!" />
+  <meta property="og:type" content="website" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@400;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐮</text></svg>" />
+</head>
+<body>
+
+  <!-- ░░ FUNDO DE BOLINHAS (canvas decorativo) ░░ -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ HEADER ░░░░░░░░░░░░░░░░░░░ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-logo" aria-label="Logo">
+        <span class="mascote-mini" aria-hidden="true">🐮</span>
+        <span class="logo-text">Lista dos Veacos</span>
+      </div>
+      <nav class="header-nav">
+        <span id="admin-greeting" class="admin-greeting hidden" aria-live="polite">Fala, chefe! 👑</span>
+        <button id="btn-login" class="btn btn-outline" aria-label="Entrar na área do admin">Entrar</button>
+        <button id="btn-logout" class="btn btn-outline hidden" aria-label="Sair da conta">Sair</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ░░░░░░░░░░░░░░░░░░░ HERO ░░░░░░░░░░░░░░░░░░░ -->
+    <section class="hero" aria-labelledby="titulo-principal">
+      <div class="hero-inner">
+        <div class="mascote-hero" aria-hidden="true" id="mascote-hero">🐮</div>
+        <div class="hero-text">
+          <h1 class="titulo-principal" id="titulo-principal">
+            <span class="titulo-linha1">LISTA DOS</span>
+            <span class="titulo-linha2">VEACOS</span>
+            <span class="titulo-emoji" aria-hidden="true">💸</span>
+          </h1>
+          <p class="subtitulo" id="subtitulo" aria-live="polite"></p>
+          <a href="#lista" class="btn btn-primary btn-cta" aria-label="Rolar até a lista de devedores">
+            👇 VER QUEM ESTÁ DEVENDO
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░░░░░░░░░░░░░░░░░ STATS ░░░░░░░░░░░░░░░░░░░ -->
+    <section class="stats-section" aria-label="Estatísticas gerais">
+      <div class="stats-grid">
+        <div class="stat-card card-veaco" style="--rot: -2deg">
+          <span class="stat-icon" aria-hidden="true">💰</span>
+          <span class="stat-label">Total Devido</span>
+          <span class="stat-value" id="stat-total">R$ 0,00</span>
+        </div>
+        <div class="stat-card card-veaco" style="--rot: 1.5deg">
+          <span class="stat-icon" aria-hidden="true">🐮</span>
+          <span class="stat-label">Veacos Ativos</span>
+          <span class="stat-value" id="stat-ativos">0</span>
+        </div>
+        <div class="stat-card card-veaco" style="--rot: -1deg">
+          <span class="stat-icon" aria-hidden="true">🏆</span>
+          <span class="stat-label">Maior Devedor</span>
+          <span class="stat-value" id="stat-maior">—</span>
+          <span class="stat-sub" id="stat-maior-valor"></span>
+        </div>
+        <div class="stat-card card-veaco" style="--rot: 2deg">
+          <span class="stat-icon" aria-hidden="true">✅</span>
+          <span class="stat-label">Já Pagaram</span>
+          <span class="stat-value" id="stat-pagaram">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░░░░░░░░░░░░░░░░░ LISTA ░░░░░░░░░░░░░░░░░░░ -->
+    <section class="lista-section" id="lista" aria-labelledby="titulo-lista">
+      <div class="lista-header">
+        <h2 id="titulo-lista" class="section-title">Os Veacos 🐂</h2>
+
+        <div class="lista-toolbar" role="search" aria-label="Ferramentas de busca e filtro">
+          <div class="search-wrap">
+            <label for="busca" class="sr-only">Buscar por nome</label>
+            <input
+              type="search"
+              id="busca"
+              class="input-veaco"
+              placeholder="🔎 Buscar por nome…"
+              aria-label="Buscar devedor por nome"
+            />
+          </div>
+
+          <div class="filter-wrap">
+            <label for="filtro-status" class="sr-only">Filtrar por status</label>
+            <select id="filtro-status" class="input-veaco select-veaco" aria-label="Filtrar por status">
+              <option value="todos">Todos</option>
+              <option value="devendo">Devendo</option>
+              <option value="pagou">Pagaram</option>
+            </select>
+          </div>
+
+          <div class="filter-wrap">
+            <label for="ordenar" class="sr-only">Ordenar lista</label>
+            <select id="ordenar" class="input-veaco select-veaco" aria-label="Ordenar lista">
+              <option value="valor_desc">↕ Maior valor</option>
+              <option value="data_asc">Mais antigo</option>
+              <option value="atraso_desc">Mais atrasado</option>
+              <option value="nome_asc">A–Z</option>
+            </select>
+          </div>
+
+          <div class="view-toggle" role="group" aria-label="Modo de visualização">
+            <button id="btn-cards" class="btn-view active" aria-pressed="true" aria-label="Visualização em cards">
+              ▦ Cards
+            </button>
+            <button id="btn-tabela" class="btn-view" aria-pressed="false" aria-label="Visualização em tabela">
+              ☰ Tabela
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skeleton de carregamento -->
+      <div id="loading-state" class="loading-state" aria-live="polite" aria-label="Carregando lista">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+
+      <!-- Estado vazio -->
+      <div id="empty-state" class="empty-state hidden" aria-live="polite">
+        <span class="empty-mascote" aria-hidden="true">🐮</span>
+        <p>Ninguém devendo?! Que povo honrado! 🥹</p>
+      </div>
+
+      <!-- Grid de cards -->
+      <div id="lista-cards" class="lista-cards" role="list" aria-label="Lista de devedores em cards"></div>
+
+      <!-- Tabela -->
+      <div id="lista-tabela-wrap" class="lista-tabela-wrap hidden">
+        <table class="lista-tabela" aria-label="Lista de devedores em tabela">
+          <thead>
+            <tr>
+              <th scope="col">Avatar</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Motivo</th>
+              <th scope="col">Atraso</th>
+              <th scope="col">Selo</th>
+              <th scope="col">Status</th>
+              <th scope="col" id="col-acoes" class="hidden">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista-tabela-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ FOOTER ░░░░░░░░░░░░░░░░░░░ -->
+  <footer class="site-footer">
+    <p>Feito com 💛 e muita indignação.</p>
+    <p class="footer-aviso">Este site é uma brincadeira entre amigos.</p>
+    <a href="login.html" class="footer-admin-link" aria-label="Acessar área do administrador">Área do dono</a>
+  </footer>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ MODAL — ADICIONAR / EDITAR ░░░░░░░░░░░░░░░░░░░ -->
+  <div id="modal-form" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal-box card-veaco">
+      <button class="modal-close" id="modal-close" aria-label="Fechar modal">✕</button>
+      <h2 id="modal-titulo" class="modal-title">Adicionar Veaco 🐮</h2>
+
+      <form id="form-devedor" novalidate>
+        <input type="hidden" id="form-id" />
+
+        <div class="form-group">
+          <label for="form-nome">Nome / Apelido <span aria-hidden="true">*</span></label>
+          <input
+            type="text"
+            id="form-nome"
+            class="input-veaco"
+            maxlength="60"
+            required
+            autocomplete="off"
+            aria-required="true"
+            aria-describedby="form-nome-help"
+          />
+          <span id="form-nome-help" class="field-help">Máx. 60 caracteres</span>
+        </div>
+
+        <div class="form-group">
+          <label for="form-valor">Valor Devido (R$) <span aria-hidden="true">*</span></label>
+          <input
+            type="number"
+            id="form-valor"
+            class="input-veaco"
+            min="0.01"
+            step="0.01"
+            required
+            aria-required="true"
+            placeholder="0,00"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="form-motivo">Motivo</label>
+          <input
+            type="text"
+            id="form-motivo"
+            class="input-veaco"
+            maxlength="140"
+            placeholder="Ex: Pizza de sexta, Empréstimo do rolê…"
+            aria-describedby="form-motivo-help"
+          />
+          <span id="form-motivo-help" class="field-help">Máx. 140 caracteres (opcional)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="form-data">Data da Dívida <span aria-hidden="true">*</span></label>
+          <input
+            type="date"
+            id="form-data"
+            class="input-veaco"
+            required
+            aria-required="true"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Avatar (emoji)</label>
+          <div class="emoji-picker" role="radiogroup" aria-label="Escolha um avatar emoji">
+            <button type="button" class="emoji-opt selected" data-emoji="🐮" aria-label="Vaca" aria-pressed="true">🐮</button>
+            <button type="button" class="emoji-opt" data-emoji="🐷" aria-label="Porco" aria-pressed="false">🐷</button>
+            <button type="button" class="emoji-opt" data-emoji="🦊" aria-label="Raposa" aria-pressed="false">🦊</button>
+            <button type="button" class="emoji-opt" data-emoji="🐸" aria-label="Sapo" aria-pressed="false">🐸</button>
+            <button type="button" class="emoji-opt" data-emoji="🐔" aria-label="Galinha" aria-pressed="false">🐔</button>
+            <button type="button" class="emoji-opt" data-emoji="🐺" aria-label="Lobo" aria-pressed="false">🐺</button>
+            <button type="button" class="emoji-opt" data-emoji="🦝" aria-label="Guaxinim" aria-pressed="false">🦝</button>
+            <button type="button" class="emoji-opt" data-emoji="🐻" aria-label="Urso" aria-pressed="false">🐻</button>
+          </div>
+          <input type="hidden" id="form-avatar" value="🐮" />
+        </div>
+
+        <div id="form-error" class="form-error hidden" role="alert" aria-live="assertive"></div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar">
+            <span id="btn-salvar-text">Salvar Veaco 🐮</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ MODAL — CONFIRMAR EXCLUSÃO ░░░░░░░░░░░░░░░░░░░ -->
+  <div id="modal-confirm" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-titulo">
+    <div class="modal-box modal-confirm-box card-veaco">
+      <h2 id="confirm-titulo" class="modal-title">Tem certeza, chefe? 🤔</h2>
+      <p id="confirm-msg">Isso vai apagar o veaco para sempre!</p>
+      <div class="form-actions">
+        <button class="btn btn-outline" id="btn-confirm-nao">Não, deixa</button>
+        <button class="btn btn-danger" id="btn-confirm-sim">Sim, mandar embora 🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ TOAST ░░░░░░░░░░░░░░░░░░░ -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ░░░░░░░░░░░░░░░░░░░ FAB — ADMIN ░░░░░░░░░░░░░░░░░░░ -->
+  <button
+    id="btn-add-fab"
+    class="fab hidden"
+    aria-label="Adicionar novo devedor"
+    title="Adicionar veaco"
+  >
+    ➕
+  </button>
+
+  <!-- Supabase via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- canvas-confetti via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
