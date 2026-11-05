@@ -56,7 +56,7 @@ function getStatus(valorPago, parcela) {
   if (parcela <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
   if (valorPago <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
   if (valorPago >= parcela) return { cls: 'status-pago', texto: '✅ Quitado' };
-  return { cls: 'status-meia', texto: `🟡 Pagou ${formatarMoeda(valorPago)}` };
+  return { cls: 'status-meia', texto: `🟡 Falta ${formatarMoeda(Math.max(0, parcela - valorPago))}` };
 }
 
 /* ============================================================

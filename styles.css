@@ -721,7 +721,7 @@ header, main, footer,
 }
 .status-devendo { background: var(--vermelho); color: var(--branco); }
 .status-meia    { background: #FFD700;         color: var(--roxo); }
-.status-pago    { background: var(--verde);    color: var(--roxo); }
+.status-pago    { background: #22c55e;         color: var(--branco); }
 
 .devedor-card.meia { background: #fffde7; }
 .devedor-card.meia .card-valor { color: #b8860b; }
