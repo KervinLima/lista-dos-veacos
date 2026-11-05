@@ -46,17 +46,16 @@ const selos = [
 ];
 const seloRedimido = { emoji: '😇', nome: 'Redimido', frase: 'Voltou pro caminho do bem.', cls: 'selo-pago' };
 
-function getSelo(diasAtraso, valorPago, parcela) {
-  if (valorPago >= parcela && parcela > 0) return seloRedimido;
-  return selos.find(s => diasAtraso >= s.min && diasAtraso <= s.max) || selos[3];
-}
-
-/* ── Status baseado em valor_pago ─────────────────────────── */
 function getStatus(valorPago, parcela) {
   if (parcela <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
   if (valorPago <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
-  if (valorPago >= parcela) return { cls: 'status-pago', texto: '✅ Quitado' };
+  if (valorPago >= parcela - 0.05) return { cls: 'status-pago', texto: '✅ Quitado' };
   return { cls: 'status-meia', texto: `🟡 Falta ${formatarMoeda(Math.max(0, parcela - valorPago))}` };
+}
+
+function getSelo(diasAtraso, valorPago, parcela) {
+  if (valorPago >= parcela - 0.05 && parcela > 0) return seloRedimido;
+  return selos.find(s => diasAtraso >= s.min && diasAtraso <= s.max) || selos[3];
 }
 
 /* ============================================================
@@ -264,8 +263,8 @@ function mostrarLoading(ativo) {
 function atualizarStats() {
   const qtdTotal  = todosDevedores.length;
   const parcela   = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
-  const quitados  = todosDevedores.filter(d => Number(d.valor_pago ?? 0) >= parcela && parcela > 0);
-  const ativos    = todosDevedores.filter(d => Number(d.valor_pago ?? 0) < parcela || parcela <= 0);
+  const quitados  = todosDevedores.filter(d => Number(d.valor_pago ?? 0) >= parcela - 0.05 && parcela > 0);
+  const ativos    = todosDevedores.filter(d => Number(d.valor_pago ?? 0) < parcela - 0.05 || parcela <= 0);
   const totalDev  = ativos.reduce((acc, d) => acc + (parcela - Number(d.valor_pago ?? 0)), 0);
 
   document.getElementById('stat-total').textContent    = formatarMoeda(totalDev);
@@ -298,8 +297,8 @@ function aplicarFiltros() {
   // Filtro de status
   const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
   if (filtro === 'devendo') lista = lista.filter(d => (d.valor_pago ?? 0) <= 0);
-  if (filtro === 'meia')    lista = lista.filter(d => (d.valor_pago ?? 0) > 0 && (d.valor_pago ?? 0) < parcela);
-  if (filtro === 'pagou')   lista = lista.filter(d => (d.valor_pago ?? 0) >= parcela && parcela > 0);
+  if (filtro === 'meia')    lista = lista.filter(d => (d.valor_pago ?? 0) > 0 && (d.valor_pago ?? 0) < parcela - 0.05);
+  if (filtro === 'pagou')   lista = lista.filter(d => (d.valor_pago ?? 0) >= parcela - 0.05 && parcela > 0);
 
   // Busca por nome
   if (busca) lista = lista.filter(d => d.nome.toLowerCase().includes(busca));
@@ -359,7 +358,7 @@ function criarCard(d, idx) {
   const selo       = getSelo(dias, valorPago, parcela);
   const status     = getStatus(valorPago, parcela);
   const rot        = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
-  const quitado    = valorPago >= parcela && parcela > 0;
+  const quitado    = valorPago >= parcela - 0.05 && parcela > 0;
   const parcial    = valorPago > 0 && !quitado;
 
   const article = document.createElement('article');
@@ -431,7 +430,7 @@ function criarLinhaTabela(d) {
   const falta     = Math.max(0, parcela - valorPago);
   const selo      = getSelo(dias, valorPago, parcela);
   const status    = getStatus(valorPago, parcela);
-  const quitado   = valorPago >= parcela && parcela > 0;
+  const quitado   = valorPago >= parcela - 0.05 && parcela > 0;
   const tr        = document.createElement('tr');
   if (quitado) tr.style.opacity = '0.7';
 
