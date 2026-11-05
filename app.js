@@ -458,13 +458,11 @@ function abrirModalAdicionar() {
   document.getElementById('modal-titulo').textContent = 'Adicionar Veaco 🐮';
   document.getElementById('form-id').value      = '';
   document.getElementById('form-nome').value    = '';
-  document.getElementById('form-valor').value   = '';
   document.getElementById('form-motivo').value  = '';
   document.getElementById('form-data').value    = dataHoje();
   document.getElementById('form-avatar').value  = '🐮';
   document.getElementById('btn-salvar-text').textContent = 'Salvar Veaco 🐮';
 
-  // Reset emoji picker
   document.querySelectorAll('.emoji-opt').forEach(b => {
     const isDefault = b.dataset.emoji === '🐮';
     b.classList.toggle('selected', isDefault);
