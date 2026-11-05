@@ -57,37 +57,36 @@ function getSelo(diasAtraso, pago) {
 const META_TOTAL = 350;
 
 function atualizarMeta() {
-  const devendoAtivo  = todosDevedores.filter(d => !d.pago);
-  const pagaram       = todosDevedores.filter(d => d.pago);
-  const qtdDevendo    = devendoAtivo.length;
-  const qtdPagaram    = pagaram.length;
-  const qtdTotal      = todosDevedores.length;
+  const devendo    = todosDevedores.filter(d => !d.pago);
+  const pagaram    = todosDevedores.filter(d => d.pago);
+  const qtdTotal   = todosDevedores.length;
+  const qtdPagaram = pagaram.length;
+  const qtdDevendo = devendo.length;
 
-  // Quanto já foi arrecadado (quem pagou × parcela que pagou na época)
-  // Como o valor da parcela muda dinamicamente, consideramos
-  // que cada pessoa que pagou contribuiu com META_TOTAL / total de pessoas no momento.
-  // Simplificação prática: arrecadado = qtd pagaram × parcela atual
-  const parcela       = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
-  const arrecadado    = qtdPagaram * parcela;
-  const faltando      = Math.max(0, META_TOTAL - arrecadado);
-  const porcentagem   = Math.min(100, Math.round((arrecadado / META_TOTAL) * 100));
+  // Parcela = meta dividida pelo total de pessoas cadastradas
+  const parcela    = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
 
-  // Parcela para quem ainda não pagou
-  const parcelaAtual  = qtdDevendo > 0 ? META_TOTAL / qtdTotal : 0;
+  // Arrecadado = quantos pagaram × parcela de cada um
+  const arrecadado = qtdPagaram * parcela;
+  const faltando   = Math.max(0, META_TOTAL - arrecadado);
+  const pct        = qtdTotal > 0 ? Math.min(100, Math.round((arrecadado / META_TOTAL) * 100)) : 0;
 
   document.getElementById('meta-total').textContent      = formatarMoeda(META_TOTAL);
-  document.getElementById('meta-parcela').textContent    = qtdDevendo > 0
-    ? formatarMoeda(parcelaAtual)
-    : qtdTotal > 0 ? '✅ Meta batida!' : '—';
+  document.getElementById('meta-parcela').textContent    = qtdTotal > 0
+    ? formatarMoeda(parcela)
+    : '—';
   document.getElementById('meta-arrecadado').textContent = formatarMoeda(arrecadado);
   document.getElementById('meta-restantes').textContent  = `${qtdDevendo} pessoa${qtdDevendo !== 1 ? 's' : ''}`;
-  document.getElementById('progress-fill').style.width   = `${porcentagem}%`;
-  document.getElementById('progress-pct').textContent    = `${porcentagem}%`;
+  document.getElementById('progress-fill').style.width   = `${pct}%`;
+  document.getElementById('progress-pct').textContent    = `${pct}%`;
 
   const faltandoEl = document.getElementById('meta-faltando');
-  if (porcentagem >= 100) {
+  if (pct >= 100) {
     faltandoEl.textContent = '🎉 Meta batida! Chácara confirmada!';
     faltandoEl.style.color = '#5BFF6A';
+  } else if (qtdTotal === 0) {
+    faltandoEl.textContent = 'Ninguém cadastrado ainda. Adiciona os veacos! 🐮';
+    faltandoEl.style.color = '';
   } else {
     faltandoEl.textContent = `Faltam ${formatarMoeda(faltando)} para a chácara! 🏡`;
     faltandoEl.style.color = '';
