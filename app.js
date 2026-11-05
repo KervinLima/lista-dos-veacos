@@ -46,9 +46,17 @@ const selos = [
 ];
 const seloRedimido = { emoji: '😇', nome: 'Redimido', frase: 'Voltou pro caminho do bem.', cls: 'selo-pago' };
 
-function getSelo(diasAtraso, parcelas) {
-  if (parcelas === 2) return seloRedimido;
+function getSelo(diasAtraso, valorPago, parcela) {
+  if (valorPago >= parcela && parcela > 0) return seloRedimido;
   return selos.find(s => diasAtraso >= s.min && diasAtraso <= s.max) || selos[3];
+}
+
+/* ── Status baseado em valor_pago ─────────────────────────── */
+function getStatus(valorPago, parcela) {
+  if (parcela <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
+  if (valorPago <= 0) return { cls: 'status-devendo', texto: '🔴 Devendo' };
+  if (valorPago >= parcela) return { cls: 'status-pago', texto: '✅ Quitado' };
+  return { cls: 'status-meia', texto: `🟡 Pagou ${formatarMoeda(valorPago)}` };
 }
 
 /* ============================================================
@@ -59,18 +67,15 @@ const META_TOTAL = 350;
 function atualizarMeta() {
   const qtdTotal   = todosDevedores.length;
   const parcela    = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
-  const meiaParcela = parcela / 2;
 
-  // Cada pessoa contribui: 0, 0.5 ou 1 parcela completa
+  // Arrecadado = soma de todos os valor_pago (limitado à parcela de cada um)
   const arrecadado = todosDevedores.reduce((acc, d) => {
-    if (d.parcelas_pagas === 2) return acc + parcela;
-    if (d.parcelas_pagas === 1) return acc + meiaParcela;
-    return acc;
+    return acc + Math.min(Number(d.valor_pago ?? 0), parcela);
   }, 0);
 
-  const qtdDevendo    = todosDevedores.filter(d => d.parcelas_pagas === 0).length;
-  const faltando      = Math.max(0, META_TOTAL - arrecadado);
-  const pct           = qtdTotal > 0 ? Math.min(100, Math.round((arrecadado / META_TOTAL) * 100)) : 0;
+  const qtdDevendo = todosDevedores.filter(d => (d.valor_pago ?? 0) <= 0).length;
+  const faltando   = Math.max(0, META_TOTAL - arrecadado);
+  const pct        = qtdTotal > 0 ? Math.min(100, Math.round((arrecadado / META_TOTAL) * 100)) : 0;
 
   document.getElementById('meta-total').textContent      = formatarMoeda(META_TOTAL);
   document.getElementById('meta-parcela').textContent    = qtdTotal > 0 ? formatarMoeda(parcela) : '—';
@@ -259,16 +264,15 @@ function mostrarLoading(ativo) {
 function atualizarStats() {
   const qtdTotal  = todosDevedores.length;
   const parcela   = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
-  const ativos    = todosDevedores.filter(d => d.parcelas_pagas < 2);
-  const quitados  = todosDevedores.filter(d => d.parcelas_pagas === 2);
-  const total     = ativos.length * parcela;
+  const quitados  = todosDevedores.filter(d => Number(d.valor_pago ?? 0) >= parcela && parcela > 0);
+  const ativos    = todosDevedores.filter(d => Number(d.valor_pago ?? 0) < parcela || parcela <= 0);
+  const totalDev  = ativos.reduce((acc, d) => acc + (parcela - Number(d.valor_pago ?? 0)), 0);
 
-  document.getElementById('stat-total').textContent    = formatarMoeda(total);
+  document.getElementById('stat-total').textContent    = formatarMoeda(totalDev);
   document.getElementById('stat-ativos').textContent   = ativos.length;
   document.getElementById('stat-pagaram').textContent  = quitados.length;
 
-  // Maior devedor = quem não pagou nada
-  const semPagar = todosDevedores.filter(d => d.parcelas_pagas === 0);
+  const semPagar = todosDevedores.filter(d => (d.valor_pago ?? 0) <= 0);
   if (semPagar.length > 0) {
     document.getElementById('stat-maior').textContent       = semPagar[0].nome;
     document.getElementById('stat-maior-valor').textContent = formatarMoeda(parcela);
@@ -278,7 +282,7 @@ function atualizarStats() {
   }
 
   const mascote = document.getElementById('mascote-hero');
-  if (mascote) mascote.textContent = total > 5000 ? '😭' : '🐮';
+  if (mascote) mascote.textContent = totalDev > 5000 ? '😭' : '🐮';
 }
 
 /* ============================================================
@@ -292,9 +296,10 @@ function aplicarFiltros() {
   let lista = [...todosDevedores];
 
   // Filtro de status
-  if (filtro === 'devendo') lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 0);
-  if (filtro === 'meia')    lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 1);
-  if (filtro === 'pagou')   lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 2);
+  const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  if (filtro === 'devendo') lista = lista.filter(d => (d.valor_pago ?? 0) <= 0);
+  if (filtro === 'meia')    lista = lista.filter(d => (d.valor_pago ?? 0) > 0 && (d.valor_pago ?? 0) < parcela);
+  if (filtro === 'pagou')   lista = lista.filter(d => (d.valor_pago ?? 0) >= parcela && parcela > 0);
 
   // Busca por nome
   if (busca) lista = lista.filter(d => d.nome.toLowerCase().includes(busca));
@@ -347,19 +352,18 @@ function renderizarLista() {
 
 /* ── Card individual ──────────────────────────────────────── */
 function criarCard(d, idx) {
-  const dias     = diasDeAtraso(d.data_divida);
-  const parcelas = d.parcelas_pagas ?? 0;
-  const selo     = getSelo(dias, parcelas);
-  const rot      = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
-  const parcela  = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
-  const quitado  = parcelas === 2;
-  const meia     = parcelas === 1;
-
-  const statusCls  = quitado ? 'status-pago' : meia ? 'status-meia' : 'status-devendo';
-  const statusText = quitado ? '✅ Quitado' : meia ? '🟡 Meia entrada' : '🔴 Devendo';
+  const dias       = diasDeAtraso(d.data_divida);
+  const parcela    = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const valorPago  = Number(d.valor_pago ?? 0);
+  const falta      = Math.max(0, parcela - valorPago);
+  const selo       = getSelo(dias, valorPago, parcela);
+  const status     = getStatus(valorPago, parcela);
+  const rot        = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
+  const quitado    = valorPago >= parcela && parcela > 0;
+  const parcial    = valorPago > 0 && !quitado;
 
   const article = document.createElement('article');
-  article.className = `devedor-card card-veaco${quitado ? ' pago' : meia ? ' meia' : ''}`;
+  article.className = `devedor-card card-veaco${quitado ? ' pago' : parcial ? ' meia' : ''}`;
   article.style.setProperty('--rot', rot);
   article.style.animationDelay = `${idx * 0.07}s`;
   article.setAttribute('role', 'listitem');
@@ -370,7 +374,10 @@ function criarCard(d, idx) {
       <span class="card-avatar" aria-hidden="true">${d.avatar || '🐮'}</span>
       <div>
         <div class="card-nome">${escaparHTML(d.nome)}</div>
-        <div class="card-valor${quitado ? ' valor-pago' : meia ? ' valor-meia' : ''}">${formatarMoeda(parcela)}</div>
+        <div class="card-valor">
+          ${formatarMoeda(parcela)}
+          ${parcial ? `<span class="card-pago-parcial">(pago: ${formatarMoeda(valorPago)})</span>` : ''}
+        </div>
       </div>
     </div>
 
@@ -381,8 +388,8 @@ function criarCard(d, idx) {
       <span class="card-atraso">
         ${quitado
           ? `✅ Quitado em ${formatarData(d.data_pagamento)}`
-          : meia
-            ? `🟡 1ª parcela paga`
+          : parcial
+            ? `⏳ Falta ${formatarMoeda(falta)}`
             : `⏳ ${dias} dia${dias !== 1 ? 's' : ''} de atraso`}
       </span>
     </div>
@@ -391,28 +398,23 @@ function criarCard(d, idx) {
       <span class="selo ${selo.cls}" title="${escaparHTML(selo.frase)}">
         ${selo.emoji} ${escaparHTML(selo.nome)}
       </span>
-      <span class="status-badge ${statusCls}">${statusText}</span>
+      <span class="status-badge ${status.cls}">${status.texto}</span>
     </div>
 
-    ${usuarioAtual ? `
+    ${usuarioAtual && !quitado ? `
     <div class="card-actions" aria-label="Ações de administrador">
       <button class="btn-action btn-edit"
-        aria-label="Editar ${escaparHTML(d.nome)}"
         onclick="abrirModalEditar('${d.id}')">✏️ Editar</button>
-      ${parcelas === 0 ? `
-        <button class="btn-action btn-meia"
-          aria-label="Marcar 1ª parcela de ${escaparHTML(d.nome)}"
-          onclick="marcarParcela('${d.id}', 1)">🟡 1ª parcela</button>
-        <button class="btn-action btn-pay"
-          aria-label="Marcar ${escaparHTML(d.nome)} como quitado"
-          onclick="marcarParcela('${d.id}', 2)">✅ Quitou</button>
-      ` : parcelas === 1 ? `
-        <button class="btn-action btn-pay"
-          aria-label="Marcar ${escaparHTML(d.nome)} como quitado"
-          onclick="marcarParcela('${d.id}', 2)">✅ Quitou</button>
-      ` : ''}
+      <button class="btn-action btn-meia"
+        onclick="abrirModalPagamento('${d.id}')">💰 Registrar pagamento</button>
       <button class="btn-action btn-del"
-        aria-label="Excluir ${escaparHTML(d.nome)}"
+        onclick="confirmarExclusao('${d.id}', '${escaparHTML(d.nome)}')">🗑️ Excluir</button>
+    </div>
+    ` : usuarioAtual ? `
+    <div class="card-actions">
+      <button class="btn-action btn-edit"
+        onclick="abrirModalEditar('${d.id}')">✏️ Editar</button>
+      <button class="btn-action btn-del"
         onclick="confirmarExclusao('${d.id}', '${escaparHTML(d.nome)}')">🗑️ Excluir</button>
     </div>
     ` : ''}
@@ -423,35 +425,28 @@ function criarCard(d, idx) {
 
 /* ── Linha de tabela ──────────────────────────────────────── */
 function criarLinhaTabela(d) {
-  const dias     = diasDeAtraso(d.data_divida);
-  const parcelas = d.parcelas_pagas ?? 0;
-  const selo     = getSelo(dias, parcelas);
-  const parcela  = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
-  const quitado  = parcelas === 2;
-  const meia     = parcelas === 1;
-  const tr       = document.createElement('tr');
+  const dias      = diasDeAtraso(d.data_divida);
+  const parcela   = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const valorPago = Number(d.valor_pago ?? 0);
+  const falta     = Math.max(0, parcela - valorPago);
+  const selo      = getSelo(dias, valorPago, parcela);
+  const status    = getStatus(valorPago, parcela);
+  const quitado   = valorPago >= parcela && parcela > 0;
+  const tr        = document.createElement('tr');
   if (quitado) tr.style.opacity = '0.7';
-
-  const statusCls  = quitado ? 'status-pago' : meia ? 'status-meia' : 'status-devendo';
-  const statusText = quitado ? '✅ Quitado' : meia ? '🟡 Meia entrada' : '🔴 Devendo';
 
   tr.innerHTML = `
     <td class="td-avatar" aria-hidden="true">${d.avatar || '🐮'}</td>
     <td>${escaparHTML(d.nome)}</td>
-    <td class="td-valor">${formatarMoeda(parcela)}</td>
+    <td class="td-valor">${formatarMoeda(parcela)}<br><small style="opacity:.7">${valorPago > 0 ? `pago: ${formatarMoeda(valorPago)}` : ''}</small></td>
     <td>${d.motivo ? escaparHTML(d.motivo) : '—'}</td>
-    <td>${quitado ? `Quitado em ${formatarData(d.data_pagamento)}` : meia ? '1ª parcela paga' : `${dias}d`}</td>
+    <td>${quitado ? `Quitado em ${formatarData(d.data_pagamento)}` : valorPago > 0 ? `Falta ${formatarMoeda(falta)}` : `${dias}d`}</td>
     <td><span class="selo ${selo.cls}" title="${escaparHTML(selo.frase)}">${selo.emoji} ${escaparHTML(selo.nome)}</span></td>
-    <td><span class="status-badge ${statusCls}">${statusText}</span></td>
+    <td><span class="status-badge ${status.cls}">${status.texto}</span></td>
     ${usuarioAtual ? `
     <td class="td-acoes">
       <button class="btn-action btn-edit" onclick="abrirModalEditar('${d.id}')">✏️</button>
-      ${parcelas === 0 ? `
-        <button class="btn-action btn-meia" onclick="marcarParcela('${d.id}', 1)">🟡</button>
-        <button class="btn-action btn-pay"  onclick="marcarParcela('${d.id}', 2)">✅</button>
-      ` : parcelas === 1 ? `
-        <button class="btn-action btn-pay"  onclick="marcarParcela('${d.id}', 2)">✅</button>
-      ` : ''}
+      ${!quitado ? `<button class="btn-action btn-meia" onclick="abrirModalPagamento('${d.id}')">💰</button>` : ''}
       <button class="btn-action btn-del" onclick="confirmarExclusao('${d.id}', '${escaparHTML(d.nome)}')">🗑️</button>
     </td>
     ` : '<td></td>'}
@@ -577,27 +572,79 @@ async function salvarDevedor(e) {
 }
 
 /* ============================================================
-   MARCAR PARCELA (1ª ou quitado)
+   MODAL DE PAGAMENTO
    ============================================================ */
-async function marcarParcela(id, qtd) {
-  const payload = { parcelas_pagas: qtd };
-  if (qtd === 2) payload.data_pagamento = dataHoje();
-  // também mantém compatibilidade com coluna pago
-  if (qtd === 2) payload.pago = true;
+function abrirModalPagamento(id) {
+  const d = todosDevedores.find(x => x.id === id);
+  if (!d) return;
 
-  const { error } = await sb.from('devedores').update(payload).eq('id', id);
+  const parcela   = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const valorPago = Number(d.valor_pago ?? 0);
+  const falta     = Math.max(0, parcela - valorPago);
 
-  if (error) {
-    console.error('Erro ao atualizar parcela:', error);
-    mostrarToast('Erro ao atualizar. 😬');
+  document.getElementById('pag-id').value        = id;
+  document.getElementById('pag-nome').textContent = d.nome;
+  document.getElementById('pag-parcela').textContent = formatarMoeda(parcela);
+  document.getElementById('pag-pago').textContent    = formatarMoeda(valorPago);
+  document.getElementById('pag-falta').textContent   = formatarMoeda(falta);
+  document.getElementById('pag-valor').value      = '';
+  document.getElementById('pag-valor').max        = falta;
+  document.getElementById('pag-error').classList.add('hidden');
+
+  abrirModal('modal-pagamento');
+}
+
+async function salvarPagamento(e) {
+  e.preventDefault();
+
+  const id        = document.getElementById('pag-id').value;
+  const novo      = parseFloat(document.getElementById('pag-valor').value);
+  const d         = todosDevedores.find(x => x.id === id);
+  if (!d) return;
+
+  const parcela   = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const valorPago = Number(d.valor_pago ?? 0);
+  const falta     = Math.max(0, parcela - valorPago);
+  const errEl     = document.getElementById('pag-error');
+
+  if (!novo || novo <= 0) {
+    errEl.textContent = 'Informe um valor maior que zero! 💰';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (novo > falta + 0.01) {
+    errEl.textContent = `Valor maior que o que falta (${formatarMoeda(falta)})! 🐮`;
+    errEl.classList.remove('hidden');
     return;
   }
 
-  if (qtd === 2) {
+  const novoTotal = Math.min(valorPago + novo, parcela);
+  const quitou    = novoTotal >= parcela - 0.01;
+  const payload   = {
+    valor_pago: novoTotal,
+    pago: quitou,
+    data_pagamento: quitou ? dataHoje() : d.data_pagamento,
+  };
+
+  const btn = document.getElementById('btn-pag-salvar');
+  btn.disabled = true;
+
+  const { error } = await sb.from('devedores').update(payload).eq('id', id);
+  btn.disabled = false;
+
+  if (error) {
+    errEl.textContent = 'Erro ao salvar. Tente novamente. 😬';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  fecharModal('modal-pagamento');
+
+  if (quitou) {
     dispararConfetti();
-    mostrarToast('Uhuuu! Mais um quitado! 😇✅');
+    mostrarToast(`${d.nome} quitou tudo! 🎉✅`);
   } else {
-    mostrarToast('1ª parcela registrada! 🟡 Falta a metade!');
+    mostrarToast(`Pagamento de ${formatarMoeda(novo)} registrado! 🟡`);
   }
 
   await carregarDevedores();
@@ -705,6 +752,16 @@ function registrarEventos() {
   /* FAB */
   document.getElementById('btn-add-fab')
     ?.addEventListener('click', abrirModalAdicionar);
+
+  /* Modal pagamento */
+  document.getElementById('form-pagamento')
+    ?.addEventListener('submit', salvarPagamento);
+  document.getElementById('pag-close')
+    ?.addEventListener('click', () => fecharModal('modal-pagamento'));
+  document.getElementById('btn-pag-cancelar')
+    ?.addEventListener('click', () => fecharModal('modal-pagamento'));
+  document.getElementById('modal-pagamento')
+    ?.addEventListener('click', (e) => { if (e.target.id === 'modal-pagamento') fecharModal('modal-pagamento'); });
 
   /* Modal form */
   document.getElementById('form-devedor')

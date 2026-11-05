@@ -831,6 +831,30 @@ header, main, footer,
   border-radius: 4px;
 }
 
+.pag-info {
+  background: var(--laranja);
+  border: 2px solid var(--roxo);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: var(--font-sub);
+  font-size: 0.95rem;
+  color: var(--roxo);
+}
+.pag-info strong { color: var(--branco); }
+
+.card-pago-parcial {
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  color: #b8860b;
+  font-weight: 600;
+  display: block;
+  -webkit-text-stroke: 0;
+}
+
 /* ── 12. MODAIS ──────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;

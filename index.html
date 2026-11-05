@@ -293,6 +293,43 @@
     </div>
   </div>
 
+  <!-- ░░░░░░░░░░░░░░░░░░░ MODAL — PAGAMENTO ░░░░░░░░░░░░░░░░░░░ -->
+  <div id="modal-pagamento" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pag-titulo">
+    <div class="modal-box card-veaco">
+      <button class="modal-close" id="pag-close" aria-label="Fechar modal">✕</button>
+      <h2 id="pag-titulo" class="modal-title">💰 Registrar Pagamento</h2>
+
+      <div class="pag-info">
+        <p>Pessoa: <strong id="pag-nome"></strong></p>
+        <p>Parcela total: <strong id="pag-parcela"></strong></p>
+        <p>Já pago: <strong id="pag-pago"></strong></p>
+        <p>Falta: <strong id="pag-falta"></strong></p>
+      </div>
+
+      <form id="form-pagamento" novalidate>
+        <input type="hidden" id="pag-id" />
+        <div class="form-group">
+          <label for="pag-valor">Valor pago agora (R$)</label>
+          <input
+            type="number"
+            id="pag-valor"
+            class="input-veaco"
+            min="0.01"
+            step="0.01"
+            placeholder="0,00"
+            required
+            aria-required="true"
+          />
+        </div>
+        <div id="pag-error" class="form-error hidden" role="alert"></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="btn-pag-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-pag-salvar">Confirmar 💰</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ░░░░░░░░░░░░░░░░░░░ MODAL — CONFIRMAR EXCLUSÃO ░░░░░░░░░░░░░░░░░░░ -->
   <div id="modal-confirm" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-titulo">
     <div class="modal-box modal-confirm-box card-veaco">
