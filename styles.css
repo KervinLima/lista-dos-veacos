@@ -311,7 +311,139 @@ header, main, footer,
   color: var(--branco);
 }
 
-/* ── 5. STATS ────────────────────────────────────────────── */
+/* ── 5b. META DA CHÁCARA ─────────────────────────────────── */
+.meta-section {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.meta-box {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1.75rem;
+  --rot: -1deg;
+}
+
+.meta-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.meta-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.meta-titulo {
+  font-family: var(--font-titulo);
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+  color: var(--roxo);
+  text-shadow: 2px 2px 0 var(--rosa);
+}
+
+.meta-subtitulo {
+  font-family: var(--font-sub);
+  font-size: 0.9rem;
+  color: var(--roxo);
+  opacity: 0.7;
+}
+
+.meta-valores {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 600px) {
+  .meta-valores { grid-template-columns: repeat(4, 1fr); }
+}
+
+.meta-item {
+  background: var(--laranja);
+  border: 2px solid var(--roxo);
+  border-radius: 14px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.meta-item.destaque {
+  background: var(--amarelo);
+  border-width: 3px;
+  box-shadow: 3px 3px 0 var(--roxo);
+}
+
+.meta-label {
+  font-family: var(--font-sub);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--roxo);
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.meta-value {
+  font-family: var(--font-titulo);
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  color: var(--roxo);
+}
+
+.meta-item.destaque .meta-value {
+  font-size: 1.6rem;
+  color: var(--rosa);
+  -webkit-text-stroke: 1px var(--roxo);
+  paint-order: stroke fill;
+}
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar-bg {
+  flex: 1;
+  height: 22px;
+  background: #f0d0b0;
+  border: 3px solid var(--roxo);
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--verde), #00cc44);
+  border-radius: 50px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 0%;
+}
+
+.progress-pct {
+  font-family: var(--font-titulo);
+  font-size: 1.1rem;
+  color: var(--roxo);
+  min-width: 45px;
+  text-align: right;
+}
+
+.meta-faltando {
+  font-family: var(--font-sub);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--roxo);
+  text-align: center;
+  opacity: 0.85;
+}
+
+
 .stats-section {
   padding: 1.5rem 1.5rem;
 }
