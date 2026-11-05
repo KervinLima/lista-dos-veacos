@@ -46,8 +46,8 @@ const selos = [
 ];
 const seloRedimido = { emoji: '😇', nome: 'Redimido', frase: 'Voltou pro caminho do bem.', cls: 'selo-pago' };
 
-function getSelo(diasAtraso, pago) {
-  if (pago) return seloRedimido;
+function getSelo(diasAtraso, parcelas) {
+  if (parcelas === 2) return seloRedimido;
   return selos.find(s => diasAtraso >= s.min && diasAtraso <= s.max) || selos[3];
 }
 
@@ -57,24 +57,23 @@ function getSelo(diasAtraso, pago) {
 const META_TOTAL = 350;
 
 function atualizarMeta() {
-  const devendo    = todosDevedores.filter(d => !d.pago);
-  const pagaram    = todosDevedores.filter(d => d.pago);
   const qtdTotal   = todosDevedores.length;
-  const qtdPagaram = pagaram.length;
-  const qtdDevendo = devendo.length;
-
-  // Parcela = meta dividida pelo total de pessoas cadastradas
   const parcela    = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
+  const meiaParcela = parcela / 2;
 
-  // Arrecadado = quantos pagaram × parcela de cada um
-  const arrecadado = qtdPagaram * parcela;
-  const faltando   = Math.max(0, META_TOTAL - arrecadado);
-  const pct        = qtdTotal > 0 ? Math.min(100, Math.round((arrecadado / META_TOTAL) * 100)) : 0;
+  // Cada pessoa contribui: 0, 0.5 ou 1 parcela completa
+  const arrecadado = todosDevedores.reduce((acc, d) => {
+    if (d.parcelas_pagas === 2) return acc + parcela;
+    if (d.parcelas_pagas === 1) return acc + meiaParcela;
+    return acc;
+  }, 0);
+
+  const qtdDevendo    = todosDevedores.filter(d => d.parcelas_pagas === 0).length;
+  const faltando      = Math.max(0, META_TOTAL - arrecadado);
+  const pct           = qtdTotal > 0 ? Math.min(100, Math.round((arrecadado / META_TOTAL) * 100)) : 0;
 
   document.getElementById('meta-total').textContent      = formatarMoeda(META_TOTAL);
-  document.getElementById('meta-parcela').textContent    = qtdTotal > 0
-    ? formatarMoeda(parcela)
-    : '—';
+  document.getElementById('meta-parcela').textContent    = qtdTotal > 0 ? formatarMoeda(parcela) : '—';
   document.getElementById('meta-arrecadado').textContent = formatarMoeda(arrecadado);
   document.getElementById('meta-restantes').textContent  = `${qtdDevendo} pessoa${qtdDevendo !== 1 ? 's' : ''}`;
   document.getElementById('progress-fill').style.width   = `${pct}%`;
@@ -258,19 +257,20 @@ function mostrarLoading(ativo) {
    ESTATÍSTICAS
    ============================================================ */
 function atualizarStats() {
-  const ativos  = todosDevedores.filter(d => !d.pago);
-  const pagaram = todosDevedores.filter(d => d.pago);
-  const qtdTotal = todosDevedores.length;
-  const parcela  = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
-  const total    = ativos.length * parcela;
-  const maior    = ativos.length > 0 ? ativos[0] : null; // já ordenado por criado_em
+  const qtdTotal  = todosDevedores.length;
+  const parcela   = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
+  const ativos    = todosDevedores.filter(d => d.parcelas_pagas < 2);
+  const quitados  = todosDevedores.filter(d => d.parcelas_pagas === 2);
+  const total     = ativos.length * parcela;
 
   document.getElementById('stat-total').textContent    = formatarMoeda(total);
   document.getElementById('stat-ativos').textContent   = ativos.length;
-  document.getElementById('stat-pagaram').textContent  = pagaram.length;
+  document.getElementById('stat-pagaram').textContent  = quitados.length;
 
-  if (maior) {
-    document.getElementById('stat-maior').textContent       = maior.nome;
+  // Maior devedor = quem não pagou nada
+  const semPagar = todosDevedores.filter(d => d.parcelas_pagas === 0);
+  if (semPagar.length > 0) {
+    document.getElementById('stat-maior').textContent       = semPagar[0].nome;
     document.getElementById('stat-maior-valor').textContent = formatarMoeda(parcela);
   } else {
     document.getElementById('stat-maior').textContent       = '—';
@@ -292,8 +292,9 @@ function aplicarFiltros() {
   let lista = [...todosDevedores];
 
   // Filtro de status
-  if (filtro === 'devendo') lista = lista.filter(d => !d.pago);
-  if (filtro === 'pagou')   lista = lista.filter(d =>  d.pago);
+  if (filtro === 'devendo') lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 0);
+  if (filtro === 'meia')    lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 1);
+  if (filtro === 'pagou')   lista = lista.filter(d => (d.parcelas_pagas ?? 0) === 2);
 
   // Busca por nome
   if (busca) lista = lista.filter(d => d.nome.toLowerCase().includes(busca));
@@ -346,13 +347,19 @@ function renderizarLista() {
 
 /* ── Card individual ──────────────────────────────────────── */
 function criarCard(d, idx) {
-  const dias    = diasDeAtraso(d.data_divida);
-  const selo    = getSelo(dias, d.pago);
-  const rot     = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
-  const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const dias     = diasDeAtraso(d.data_divida);
+  const parcelas = d.parcelas_pagas ?? 0;
+  const selo     = getSelo(dias, parcelas);
+  const rot      = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
+  const parcela  = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const quitado  = parcelas === 2;
+  const meia     = parcelas === 1;
+
+  const statusCls  = quitado ? 'status-pago' : meia ? 'status-meia' : 'status-devendo';
+  const statusText = quitado ? '✅ Quitado' : meia ? '🟡 Meia entrada' : '🔴 Devendo';
 
   const article = document.createElement('article');
-  article.className = `devedor-card card-veaco${d.pago ? ' pago' : ''}`;
+  article.className = `devedor-card card-veaco${quitado ? ' pago' : meia ? ' meia' : ''}`;
   article.style.setProperty('--rot', rot);
   article.style.animationDelay = `${idx * 0.07}s`;
   article.setAttribute('role', 'listitem');
@@ -363,18 +370,20 @@ function criarCard(d, idx) {
       <span class="card-avatar" aria-hidden="true">${d.avatar || '🐮'}</span>
       <div>
         <div class="card-nome">${escaparHTML(d.nome)}</div>
-        <div class="card-valor">${formatarMoeda(parcela)}</div>
+        <div class="card-valor${quitado ? ' valor-pago' : meia ? ' valor-meia' : ''}">${formatarMoeda(parcela)}</div>
       </div>
     </div>
 
-    ${d.motivo ? `<div class="card-motivo" title="Motivo">"${escaparHTML(d.motivo)}"</div>` : ''}
+    ${d.motivo ? `<div class="card-motivo">"${escaparHTML(d.motivo)}"</div>` : ''}
 
     <div class="card-meta">
       <span>📅 Desde ${formatarData(d.data_divida)}</span>
       <span class="card-atraso">
-        ${d.pago
-          ? `✅ Pago em ${formatarData(d.data_pagamento)}`
-          : `⏳ ${dias} dia${dias !== 1 ? 's' : ''} de atraso`}
+        ${quitado
+          ? `✅ Quitado em ${formatarData(d.data_pagamento)}`
+          : meia
+            ? `🟡 1ª parcela paga`
+            : `⏳ ${dias} dia${dias !== 1 ? 's' : ''} de atraso`}
       </span>
     </div>
 
@@ -382,9 +391,7 @@ function criarCard(d, idx) {
       <span class="selo ${selo.cls}" title="${escaparHTML(selo.frase)}">
         ${selo.emoji} ${escaparHTML(selo.nome)}
       </span>
-      <span class="status-badge ${d.pago ? 'status-pago' : 'status-devendo'}">
-        ${d.pago ? '✅ Pagou' : '🔴 Devendo'}
-      </span>
+      <span class="status-badge ${statusCls}">${statusText}</span>
     </div>
 
     ${usuarioAtual ? `
@@ -392,10 +399,17 @@ function criarCard(d, idx) {
       <button class="btn-action btn-edit"
         aria-label="Editar ${escaparHTML(d.nome)}"
         onclick="abrirModalEditar('${d.id}')">✏️ Editar</button>
-      ${!d.pago ? `
-      <button class="btn-action btn-pay"
-        aria-label="Marcar ${escaparHTML(d.nome)} como pago"
-        onclick="marcarComoPago('${d.id}')">✅ Pagou</button>
+      ${parcelas === 0 ? `
+        <button class="btn-action btn-meia"
+          aria-label="Marcar 1ª parcela de ${escaparHTML(d.nome)}"
+          onclick="marcarParcela('${d.id}', 1)">🟡 1ª parcela</button>
+        <button class="btn-action btn-pay"
+          aria-label="Marcar ${escaparHTML(d.nome)} como quitado"
+          onclick="marcarParcela('${d.id}', 2)">✅ Quitou</button>
+      ` : parcelas === 1 ? `
+        <button class="btn-action btn-pay"
+          aria-label="Marcar ${escaparHTML(d.nome)} como quitado"
+          onclick="marcarParcela('${d.id}', 2)">✅ Quitou</button>
       ` : ''}
       <button class="btn-action btn-del"
         aria-label="Excluir ${escaparHTML(d.nome)}"
@@ -409,41 +423,36 @@ function criarCard(d, idx) {
 
 /* ── Linha de tabela ──────────────────────────────────────── */
 function criarLinhaTabela(d) {
-  const dias    = diasDeAtraso(d.data_divida);
-  const selo    = getSelo(dias, d.pago);
-  const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
-  const tr      = document.createElement('tr');
-  if (d.pago) tr.style.opacity = '0.7';
+  const dias     = diasDeAtraso(d.data_divida);
+  const parcelas = d.parcelas_pagas ?? 0;
+  const selo     = getSelo(dias, parcelas);
+  const parcela  = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const quitado  = parcelas === 2;
+  const meia     = parcelas === 1;
+  const tr       = document.createElement('tr');
+  if (quitado) tr.style.opacity = '0.7';
+
+  const statusCls  = quitado ? 'status-pago' : meia ? 'status-meia' : 'status-devendo';
+  const statusText = quitado ? '✅ Quitado' : meia ? '🟡 Meia entrada' : '🔴 Devendo';
 
   tr.innerHTML = `
     <td class="td-avatar" aria-hidden="true">${d.avatar || '🐮'}</td>
     <td>${escaparHTML(d.nome)}</td>
     <td class="td-valor">${formatarMoeda(parcela)}</td>
     <td>${d.motivo ? escaparHTML(d.motivo) : '—'}</td>
-    <td>${d.pago ? `Pago em ${formatarData(d.data_pagamento)}` : `${dias}d`}</td>
-    <td>
-      <span class="selo ${selo.cls}" title="${escaparHTML(selo.frase)}">
-        ${selo.emoji} ${escaparHTML(selo.nome)}
-      </span>
-    </td>
-    <td>
-      <span class="status-badge ${d.pago ? 'status-pago' : 'status-devendo'}">
-        ${d.pago ? '✅ Pagou' : '🔴 Devendo'}
-      </span>
-    </td>
+    <td>${quitado ? `Quitado em ${formatarData(d.data_pagamento)}` : meia ? '1ª parcela paga' : `${dias}d`}</td>
+    <td><span class="selo ${selo.cls}" title="${escaparHTML(selo.frase)}">${selo.emoji} ${escaparHTML(selo.nome)}</span></td>
+    <td><span class="status-badge ${statusCls}">${statusText}</span></td>
     ${usuarioAtual ? `
     <td class="td-acoes">
-      <button class="btn-action btn-edit"
-        aria-label="Editar ${escaparHTML(d.nome)}"
-        onclick="abrirModalEditar('${d.id}')">✏️</button>
-      ${!d.pago ? `
-      <button class="btn-action btn-pay"
-        aria-label="Marcar como pago"
-        onclick="marcarComoPago('${d.id}')">✅</button>
+      <button class="btn-action btn-edit" onclick="abrirModalEditar('${d.id}')">✏️</button>
+      ${parcelas === 0 ? `
+        <button class="btn-action btn-meia" onclick="marcarParcela('${d.id}', 1)">🟡</button>
+        <button class="btn-action btn-pay"  onclick="marcarParcela('${d.id}', 2)">✅</button>
+      ` : parcelas === 1 ? `
+        <button class="btn-action btn-pay"  onclick="marcarParcela('${d.id}', 2)">✅</button>
       ` : ''}
-      <button class="btn-action btn-del"
-        aria-label="Excluir"
-        onclick="confirmarExclusao('${d.id}', '${escaparHTML(d.nome)}')">🗑️</button>
+      <button class="btn-action btn-del" onclick="confirmarExclusao('${d.id}', '${escaparHTML(d.nome)}')">🗑️</button>
     </td>
     ` : '<td></td>'}
   `;
@@ -568,22 +577,29 @@ async function salvarDevedor(e) {
 }
 
 /* ============================================================
-   MARCAR COMO PAGO
+   MARCAR PARCELA (1ª ou quitado)
    ============================================================ */
-async function marcarComoPago(id) {
-  const { error } = await sb
-    .from('devedores')
-    .update({ pago: true, data_pagamento: dataHoje() })
-    .eq('id', id);
+async function marcarParcela(id, qtd) {
+  const payload = { parcelas_pagas: qtd };
+  if (qtd === 2) payload.data_pagamento = dataHoje();
+  // também mantém compatibilidade com coluna pago
+  if (qtd === 2) payload.pago = true;
+
+  const { error } = await sb.from('devedores').update(payload).eq('id', id);
 
   if (error) {
-    console.error('Erro ao marcar como pago:', error);
-    mostrarToast('Erro ao marcar como pago. 😬');
+    console.error('Erro ao atualizar parcela:', error);
+    mostrarToast('Erro ao atualizar. 😬');
     return;
   }
 
-  dispararConfetti();
-  mostrarToast('Uhuuu! Mais um redimido! 😇✅');
+  if (qtd === 2) {
+    dispararConfetti();
+    mostrarToast('Uhuuu! Mais um quitado! 😇✅');
+  } else {
+    mostrarToast('1ª parcela registrada! 🟡 Falta a metade!');
+  }
+
   await carregarDevedores();
 }
 

@@ -720,7 +720,11 @@ header, main, footer,
   border: 2px solid var(--roxo);
 }
 .status-devendo { background: var(--vermelho); color: var(--branco); }
+.status-meia    { background: #FFD700;         color: var(--roxo); }
 .status-pago    { background: var(--verde);    color: var(--roxo); }
+
+.devedor-card.meia { background: #fffde7; }
+.devedor-card.meia .card-valor { color: #b8860b; }
 
 /* Botões de ação admin no card */
 .card-actions {
@@ -751,6 +755,7 @@ header, main, footer,
   outline: 3px solid var(--rosa);
 }
 .btn-edit  { background: var(--amarelo); color: var(--roxo); }
+.btn-meia  { background: #FFD700; color: var(--roxo); }
 .btn-pay   { background: var(--verde);   color: var(--roxo); }
 .btn-del   { background: var(--vermelho); color: var(--branco); }
 
