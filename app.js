@@ -260,8 +260,10 @@ function mostrarLoading(ativo) {
 function atualizarStats() {
   const ativos  = todosDevedores.filter(d => !d.pago);
   const pagaram = todosDevedores.filter(d => d.pago);
-  const total   = ativos.reduce((acc, d) => acc + Number(d.valor), 0);
-  const maior   = ativos.sort((a, b) => b.valor - a.valor)[0];
+  const qtdTotal = todosDevedores.length;
+  const parcela  = qtdTotal > 0 ? META_TOTAL / qtdTotal : 0;
+  const total    = ativos.length * parcela;
+  const maior    = ativos.length > 0 ? ativos[0] : null; // já ordenado por criado_em
 
   document.getElementById('stat-total').textContent    = formatarMoeda(total);
   document.getElementById('stat-ativos').textContent   = ativos.length;
@@ -269,13 +271,12 @@ function atualizarStats() {
 
   if (maior) {
     document.getElementById('stat-maior').textContent       = maior.nome;
-    document.getElementById('stat-maior-valor').textContent = formatarMoeda(maior.valor);
+    document.getElementById('stat-maior-valor').textContent = formatarMoeda(parcela);
   } else {
     document.getElementById('stat-maior').textContent       = '—';
     document.getElementById('stat-maior-valor').textContent = '';
   }
 
-  // Mascote chora quando total > R$ 5.000
   const mascote = document.getElementById('mascote-hero');
   if (mascote) mascote.textContent = total > 5000 ? '😭' : '🐮';
 }
@@ -345,23 +346,24 @@ function renderizarLista() {
 
 /* ── Card individual ──────────────────────────────────────── */
 function criarCard(d, idx) {
-  const dias  = diasDeAtraso(d.data_divida);
-  const selo  = getSelo(dias, d.pago);
-  const rot   = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
+  const dias    = diasDeAtraso(d.data_divida);
+  const selo    = getSelo(dias, d.pago);
+  const rot     = idx % 2 === 0 ? '-1.5deg' : '1.5deg';
+  const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
 
   const article = document.createElement('article');
   article.className = `devedor-card card-veaco${d.pago ? ' pago' : ''}`;
   article.style.setProperty('--rot', rot);
   article.style.animationDelay = `${idx * 0.07}s`;
   article.setAttribute('role', 'listitem');
-  article.setAttribute('aria-label', `${d.nome}, ${formatarMoeda(d.valor)}`);
+  article.setAttribute('aria-label', `${d.nome}, parcela ${formatarMoeda(parcela)}`);
 
   article.innerHTML = `
     <div class="card-top">
       <span class="card-avatar" aria-hidden="true">${d.avatar || '🐮'}</span>
       <div>
         <div class="card-nome">${escaparHTML(d.nome)}</div>
-        <div class="card-valor">${formatarMoeda(d.valor)}</div>
+        <div class="card-valor">${formatarMoeda(parcela)}</div>
       </div>
     </div>
 
@@ -407,15 +409,16 @@ function criarCard(d, idx) {
 
 /* ── Linha de tabela ──────────────────────────────────────── */
 function criarLinhaTabela(d) {
-  const dias = diasDeAtraso(d.data_divida);
-  const selo = getSelo(dias, d.pago);
-  const tr   = document.createElement('tr');
+  const dias    = diasDeAtraso(d.data_divida);
+  const selo    = getSelo(dias, d.pago);
+  const parcela = todosDevedores.length > 0 ? META_TOTAL / todosDevedores.length : 0;
+  const tr      = document.createElement('tr');
   if (d.pago) tr.style.opacity = '0.7';
 
   tr.innerHTML = `
     <td class="td-avatar" aria-hidden="true">${d.avatar || '🐮'}</td>
     <td>${escaparHTML(d.nome)}</td>
-    <td class="td-valor">${formatarMoeda(d.valor)}</td>
+    <td class="td-valor">${formatarMoeda(parcela)}</td>
     <td>${d.motivo ? escaparHTML(d.motivo) : '—'}</td>
     <td>${d.pago ? `Pago em ${formatarData(d.data_pagamento)}` : `${dias}d`}</td>
     <td>
@@ -479,13 +482,11 @@ function abrirModalEditar(id) {
   document.getElementById('modal-titulo').textContent = 'Editar Veaco ✏️';
   document.getElementById('form-id').value      = d.id;
   document.getElementById('form-nome').value    = d.nome;
-  document.getElementById('form-valor').value   = d.valor;
   document.getElementById('form-motivo').value  = d.motivo ?? '';
   document.getElementById('form-data').value    = d.data_divida;
   document.getElementById('form-avatar').value  = d.avatar ?? '🐮';
   document.getElementById('btn-salvar-text').textContent = 'Salvar alterações ✏️';
 
-  // Emoji picker — selecionar avatar atual
   document.querySelectorAll('.emoji-opt').forEach(b => {
     const sel = b.dataset.emoji === (d.avatar ?? '🐮');
     b.classList.toggle('selected', sel);
@@ -530,31 +531,27 @@ async function salvarDevedor(e) {
 
   const id     = document.getElementById('form-id').value;
   const nome   = document.getElementById('form-nome').value.trim();
-  const valor  = parseFloat(document.getElementById('form-valor').value);
   const motivo = document.getElementById('form-motivo').value.trim();
   const data   = document.getElementById('form-data').value;
   const avatar = document.getElementById('form-avatar').value;
 
-  // Validações básicas
-  if (!nome)              return mostrarErroForm('Coloca o nome do veaco! 🐮');
-  if (nome.length > 60)   return mostrarErroForm('Nome muito longo! Máx. 60 caracteres.');
-  if (!valor || valor <= 0) return mostrarErroForm('O valor da dívida precisa ser maior que zero! 💰');
-  if (!data)              return mostrarErroForm('Informe a data da dívida! 📅');
+  // Validações
+  if (!nome)               return mostrarErroForm('Coloca o nome do veaco! 🐮');
+  if (nome.length > 60)    return mostrarErroForm('Nome muito longo! Máx. 60 caracteres.');
+  if (!data)               return mostrarErroForm('Informe a data! 📅');
   if (motivo.length > 140) return mostrarErroForm('Motivo muito longo! Máx. 140 caracteres.');
 
-  const payload = { nome, valor, motivo: motivo || null, data_divida: data, avatar };
+  // valor = 1 como placeholder (o valor real é calculado dinamicamente pela meta)
+  const payload = { nome, valor: 1, motivo: motivo || null, data_divida: data, avatar };
 
   const btnSalvar = document.getElementById('btn-salvar');
   btnSalvar.disabled = true;
   document.getElementById('btn-salvar-text').textContent = 'Salvando…';
 
   let error;
-
   if (id) {
-    // EDITAR
     ({ error } = await sb.from('devedores').update(payload).eq('id', id));
   } else {
-    // INSERIR
     ({ error } = await sb.from('devedores').insert(payload));
   }
 
